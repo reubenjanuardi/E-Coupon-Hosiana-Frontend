@@ -4,7 +4,7 @@ import motorImage from "../assets/Motor.jpg";
 import microwaveImage from "../assets/Microwave.jpg";
 import sofabedImage from "../assets/Sofabed.jpg";
 import tvImage from "../assets/TV.jpg";
-import kulkasImage from "../assets/kulkas.jpg";
+import kulkasImage from "../assets/Kulkas.jpg";
 import dispenserImage from "../assets/Dispenser.png";
 import heroImage from "../assets/gereja.jpg";
 import logoNavbar from "../assets/logo-navbar.svg";
