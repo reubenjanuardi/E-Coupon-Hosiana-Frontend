@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { BookOpen, Gift, CheckCircle, QrCode, MessageCircle, Youtube, Instagram, Trophy, ChevronDown, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import motorImage from "../assets/Motor.jpg";
 import microwaveImage from "../assets/Microwave.jpg";
-import sofabedImage from "../assets/Sofabed.jpg";
 import tvImage from "../assets/TV.jpg";
 import kulkasImage from "../assets/Kulkas.jpg";
 import dispenserImage from "../assets/Dispenser.png";
@@ -45,7 +44,6 @@ const prizes: Prize[] = [
   { name: "Kulkas 2 pintu", image: kulkasImage },
   { name: "Dispenser", image: dispenserImage },
   { name: "Microwave", image: microwaveImage },
-  { name: "Sofa bed", image: sofabedImage },
 ]; //w:800 q:80
 
 function PrizeCarousel() {
