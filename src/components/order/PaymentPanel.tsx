@@ -152,18 +152,11 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount,
           ) : (
             <div className="w-full space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-500 mb-1">Bank BCA</p>
+                <p className="text-sm text-gray-500 mb-1">Bank BRI</p>
                 <div className="flex justify-between items-center">
-                  <p className="text-lg font-mono font-bold text-gray-900">123 456 7890</p>
+                  <p className="text-lg font-mono font-bold text-gray-900">0345 01 001 568 566</p>
                 </div>
-                <p className="text-sm text-gray-700 mt-1">a.n. Panitia E-Coupon</p>
-              </div>
-              <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-500 mb-1">Bank Mandiri</p>
-                <div className="flex justify-between items-center">
-                  <p className="text-lg font-mono font-bold text-gray-900">098 765 4321</p>
-                </div>
-                <p className="text-sm text-gray-700 mt-1">a.n. Panitia E-Coupon</p>
+                <p className="text-sm text-gray-700 mt-1">a.n. GPIB HOSIANA (BRI PEG)</p>
               </div>
               <div className="flex items-start gap-2 text-blue-700 bg-blue-50 p-3 rounded-lg text-sm">
                 <Info size={16} className="shrink-0 mt-0.5" />
