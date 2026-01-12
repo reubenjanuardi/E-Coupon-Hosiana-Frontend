@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Upload, CreditCard, QrCode, Loader2, CheckCircle2, AlertTriangle, Info } from "lucide-react";
+import { Upload, CreditCard, QrCode, Loader2, CheckCircle2, AlertTriangle, Info, Copy } from "lucide-react";
 import QRCode from "qrcode";
 import { clsx } from "clsx";
 import { getQris } from "../../api/payments";
@@ -28,6 +28,9 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount,
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const rekeningNumber = "0345 01 001 568 566";
 
   const finalAmount = useMemo(() => payableAmount ?? baseAmount, [payableAmount, baseAmount]);
 
@@ -151,10 +154,38 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount,
             )
           ) : (
             <div className="w-full space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
                 <p className="text-sm text-gray-500 mb-1">Bank BRI</p>
                 <div className="flex justify-between items-center">
-                  <p className="text-lg font-mono font-bold text-gray-900">0345 01 001 568 566</p>
+                  <p className="text-lg font-mono font-bold text-gray-900">{rekeningNumber}</p>
+                  <button
+                    onClick={async () => {
+                      try {
+                        // copy without spaces for convenience
+                        await navigator.clipboard.writeText(rekeningNumber.replace(/\s+/g, ""));
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      } catch (err) {
+                        // fallback: create textarea
+                        const ta = document.createElement("textarea");
+                        ta.value = rekeningNumber.replace(/\s+/g, "");
+                        document.body.appendChild(ta);
+                        ta.select();
+                        try {
+                          document.execCommand("copy");
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        } catch (e) {
+                          // ignore
+                        }
+                        document.body.removeChild(ta);
+                      }
+                    }}
+                    className="ml-4 inline-flex items-center gap-2 px-3 py-1.5 border border-gray-200 bg-white rounded hover:bg-gray-50 text-sm"
+                  >
+                    {copied ? <CheckCircle2 size={16} className="text-green-600" /> : <Copy size={16} />}
+                    <span className="select-none">{copied ? "Disalin" : "Salin"}</span>
+                  </button>
                 </div>
                 <p className="text-sm text-gray-700 mt-1">a.n. GPIB HOSIANA (BRI PEG)</p>
               </div>
