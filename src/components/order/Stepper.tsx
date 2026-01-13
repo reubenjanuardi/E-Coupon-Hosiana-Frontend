@@ -34,7 +34,15 @@ export const Stepper: React.FC<StepperProps> = ({ currentStep, steps }) => {
               >
                 {isCompleted ? <Check size={16} /> : <span className="text-sm font-medium">{stepNumber}</span>}
               </div>
-              <span className={clsx("text-xs mt-2 font-medium absolute top-8 w-32 text-center", isActive ? "text-blue-600" : "text-gray-500")}>{step}</span>
+              <span
+                className={clsx(
+                  "text-xs mt-2 font-medium absolute top-8 w-32",
+                  isActive ? "text-blue-600" : "text-gray-500",
+                  index === 0 ? "left-0 text-left" : index === steps.length - 1 ? "right-0 text-right" : "left-1/2 -translate-x-1/2 text-center"
+                )}
+              >
+                {step}
+              </span>
             </div>
           );
         })}

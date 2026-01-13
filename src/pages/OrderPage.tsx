@@ -130,7 +130,7 @@ const OrderPage: React.FC = () => {
         <div className="max-w-3xl mx-auto px-4 py-4">
           <h1 className="text-xl font-bold text-gray-900 text-center">Pemesanan Kupon</h1>
         </div>
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto px-4 pb-2">
           <Stepper currentStep={currentStep} steps={STEPS} />
         </div>
       </header>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { BookOpen, Gift, CheckCircle, QrCode, MessageCircle, Youtube, Instagram, Trophy, ChevronDown, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
+import { BookOpen, CheckCircle, QrCode, MessageCircle, Youtube, Instagram, Trophy, ChevronDown, ChevronLeft, ChevronRight, Menu, X, Ticket } from "lucide-react";
 import motorImage from "../assets/Motor.jpg";
 import microwaveImage from "../assets/Microwave.jpg";
 import tvImage from "../assets/TV.jpg";
@@ -49,6 +49,7 @@ const prizes: Prize[] = [
 function PrizeCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [slidesToShow, setSlidesToShow] = useState(1);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -61,18 +62,41 @@ function PrizeCarousel() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    if (isPaused) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => {
+        const maxIndex = prizes.length - slidesToShow;
+        return prev >= maxIndex ? 0 : prev + 1;
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [slidesToShow, isPaused]);
+
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % (prizes.length - slidesToShow + 1));
+    setCurrentIndex((prev) => {
+      const maxIndex = prizes.length - slidesToShow;
+      return prev >= maxIndex ? 0 : prev + 1;
+    });
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - 1 < 0 ? 0 : prev - 1));
+    setCurrentIndex((prev) => {
+      const maxIndex = prizes.length - slidesToShow;
+      return prev <= 0 ? maxIndex : prev - 1;
+    });
   };
 
   return (
-    <div className="relative px-12">
+    <div 
+      className="relative px-12"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <div className="overflow-hidden">
-        <div className="flex transition-transform duration-300 ease-in-out gap-4" style={{ transform: `translateX(-${currentIndex * (100 / slidesToShow)}%)` }}>
+        <div className="flex transition-transform duration-500 ease-in-out gap-4" style={{ transform: `translateX(-${currentIndex * (100 / slidesToShow)}%)` }}>
           {prizes.map((prize, index) => (
             <div key={index} className="flex-shrink-0 px-2" style={{ width: `${100 / slidesToShow}%` }}>
               <div className="bg-white rounded-lg shadow-md overflow-hidden border border-slate-200 h-full">
@@ -88,14 +112,13 @@ function PrizeCarousel() {
         </div>
       </div>
 
-      <button onClick={prevSlide} disabled={currentIndex === 0} className="absolute left-0 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-md border border-slate-200 disabled:opacity-50 hover:bg-slate-50">
+      <button onClick={prevSlide} className="absolute left-0 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-md border border-slate-200 hover:bg-slate-50 transition-colors z-10">
         <ChevronLeft className="size-6 text-slate-600" />
       </button>
 
       <button
         onClick={nextSlide}
-        disabled={currentIndex >= prizes.length - slidesToShow}
-        className="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-md border border-slate-200 disabled:opacity-50 hover:bg-slate-50"
+        className="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-md border border-slate-200 hover:bg-slate-50 transition-colors z-10"
       >
         <ChevronRight className="size-6 text-slate-600" />
       </button>
@@ -155,7 +178,9 @@ export default function LandingPage({ onOrder, onVerify, onAdmin }: LandingPageP
       {/* Navbar */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || isMenuOpen ? "bg-white/90 backdrop-blur-md shadow-md py-2" : "bg-transparent py-4"}`}>
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-between">
-          <img src={logoNavbar} alt="Logo GPIB Hosiana" className="h-14 w-auto md:h-14" />
+          <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="focus:outline-none transition-transform hover:scale-105">
+            <img src={logoNavbar} alt="Logo GPIB Hosiana" className="h-14 w-auto md:h-14" />
+          </button>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6">
@@ -311,8 +336,8 @@ export default function LandingPage({ onOrder, onVerify, onAdmin }: LandingPageP
         <section id="how-it-works" className="scroll-mt-24">
           <h2 className="text-3xl font-bold text-center mb-10 text-slate-800">Cara Pemesanan</h2>
           <div className="grid md:grid-cols-4 gap-6">
-            <StepCard number="1" icon={<Gift className="size-8" />} title="Pilih Buku" description="Pilih jumlah buku kupon yang ingin dibeli" />
-            <StepCard number="2" icon={<BookOpen className="size-8" />} title="Isi Data" description="Masukkan nama, WhatsApp, dan gereja Anda" />
+            <StepCard number="1" icon={<BookOpen className="size-8" />} title="Isi Data" description="Masukkan nama, WhatsApp, dan gereja Anda" />
+            <StepCard number="2" icon={<Ticket className="size-8" />} title="Pilih Buku" description="Pilih jumlah buku kupon yang ingin dibeli" />
             <StepCard number="3" icon={<QrCode className="size-8" />} title="Bayar" description="Transfer atau scan QRIS dan upload bukti" />
             <StepCard number="4" icon={<CheckCircle className="size-8" />} title="Terima Kupon" description="Kupon digital dikirim via WhatsApp" />
           </div>
@@ -349,22 +374,22 @@ export default function LandingPage({ onOrder, onVerify, onAdmin }: LandingPageP
         </section>
 
         {/* Contact Section */}
-        <section id="contact" className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-10 scroll-mt-24">
+        <section id="contact" className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6 md:p-10 scroll-mt-24">
           <div className="text-center max-w-2xl mx-auto">
             <div className="size-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-md">
               <MessageCircle className="size-8 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-slate-800 mb-4">Butuh Bantuan?</h2>
             <p className="text-slate-700 mb-8 text-lg">Hubungi kami untuk informasi lebih lanjut tentang program e-kupon gereja</p>
-            <div className="mb-8 bg-white/50 p-6 rounded-xl inline-block min-w-[300px]">
+            <div className="mb-8 bg-white/50 p-6 rounded-xl w-full max-w-xs mx-auto">
               <p className="text-slate-500 text-sm uppercase tracking-wider font-semibold mb-2">Contact Person</p>
               <p className="text-slate-900 text-xl font-bold">Marcelia Soraya</p>
             </div>
             <div>
-              <a href="https://wa.me/62081361378317" target="_blank" rel="noopener noreferrer" className="inline-block">
-                <Button size="lg" className="bg-green-600 hover:bg-green-700 shadow-lg border-none">
-                  <MessageCircle className="size-5 mr-2" />
-                  Hubungi via WhatsApp
+              <a href="https://wa.me/62081361378317" target="_blank" rel="noopener noreferrer" className="inline-block w-full sm:w-auto">
+                <Button size="lg" className="bg-green-600 hover:bg-green-700 shadow-lg border-none !h-auto py-4 w-full sm:w-auto flex items-center justify-center gap-2 whitespace-normal text-center leading-tight">
+                  <MessageCircle className="size-6 flex-shrink-0" />
+                  <span className="font-bold">Hubungi via WhatsApp</span>
                 </Button>
               </a>
             </div>
@@ -407,6 +432,7 @@ export default function LandingPage({ onOrder, onVerify, onAdmin }: LandingPageP
 
           <div className="border-t border-slate-800 pt-8">
             <p className="text-sm text-slate-500">Copyright © 2026 GPIB Hosiana Jakarta</p>
+            <p className="text-xs text-slate-600 mt-2">Made by RJ</p>
           </div>
         </div>
       </footer>
