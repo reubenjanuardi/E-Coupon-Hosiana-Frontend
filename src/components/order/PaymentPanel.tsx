@@ -38,6 +38,7 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount,
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [amountCopied, setAmountCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(() => {
     const expiresTime = new Date(expiresAt).getTime();
     const now = Date.now();
@@ -160,7 +161,24 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount,
         <div className="flex justify-between items-center pt-3">
           <span className="text-lg font-medium text-gray-900">Total Pembayaran</span>
           <div className="text-right">
-            <p className="text-xl font-bold text-blue-600">{formatCurrency(finalAmount)}</p>
+            <div className="flex items-center justify-end gap-2">
+              <p className="text-xl font-bold text-blue-600">{formatCurrency(finalAmount)}</p>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(finalAmount.toString());
+                  setAmountCopied(true);
+                  setTimeout(() => setAmountCopied(false), 2000);
+                }}
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                title="Salin Nominal"
+              >
+                {amountCopied ? (
+                  <CheckCircle2 className="size-4 text-green-600" />
+                ) : (
+                  <Copy className="size-4 text-gray-400" />
+                )}
+              </button>
+            </div>
             <p className="text-xs text-gray-500">Gunakan nominal persis termasuk kode unik</p>
           </div>
         </div>
