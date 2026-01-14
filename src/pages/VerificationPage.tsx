@@ -10,7 +10,7 @@ import { verifyCoupon, type VerificationResponse } from "../api/verification";
  * No authentication required - fully public access
  *
  * Features:
- * - Verify BUKU-00001 (coupon books)
+ * - Verify BUKU-0001 (coupon books)
  * - Verify KPN-00007 (individual coupons)
  * - Auto-verify from URL parameter
  * - Input validation with regex
@@ -20,7 +20,7 @@ import { verifyCoupon, type VerificationResponse } from "../api/verification";
  */
 
 // Regex patterns for validation
-const BOOK_PATTERN = /^BUKU-\d{5}$/;
+const BOOK_PATTERN = /^BUKU-\d{4}$/;
 const COUPON_PATTERN = /^KPN-\d{5}$/;
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -50,23 +50,23 @@ function Button({ className = "", variant = "primary", size = "md", ...props }: 
  * Status Badge Component
  * Shows visual indicator for coupon status
  */
-const StatusBadge: React.FC<{ status: "valid" | "claimed" | "void" }> = ({ status }) => {
+const StatusBadge: React.FC<{ status: "valid" | "pending" | "void" | "available" }> = ({ status }) => {
   const statusConfig = {
     valid: {
-      label: "Valid - Dapat Digunakan",
+      label: "Valid - Terdaftar",
       icon: CheckCircle,
       bgColor: "bg-green-50",
       textColor: "text-green-700",
       borderColor: "border-green-200",
       iconColor: "text-green-600",
     },
-    claimed: {
-      label: "Sudah Digunakan",
+    pending: {
+      label: "Sedang Diproses (Pending)",
       icon: AlertCircle,
-      bgColor: "bg-yellow-50",
-      textColor: "text-yellow-700",
-      borderColor: "border-yellow-200",
-      iconColor: "text-yellow-600",
+      bgColor: "bg-orange-50",
+      textColor: "text-orange-700",
+      borderColor: "border-orange-200",
+      iconColor: "text-orange-600",
     },
     void: {
       label: "Tidak Berlaku",
@@ -75,6 +75,14 @@ const StatusBadge: React.FC<{ status: "valid" | "claimed" | "void" }> = ({ statu
       textColor: "text-red-700",
       borderColor: "border-red-200",
       iconColor: "text-red-600",
+    },
+    available: {
+      label: "Tersedia - Belum Ada Pemilik",
+      icon: CheckCircle,
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-700",
+      borderColor: "border-blue-200",
+      iconColor: "text-blue-600",
     },
   };
 
@@ -138,20 +146,22 @@ const VerificationResult: React.FC<{ result: VerificationResponse }> = ({ result
           </div>
         )}
 
-        {/* Owner Information (masked) */}
-        <div className="p-4 bg-slate-50">
-          <div className="text-sm text-slate-600 mb-3 font-medium">Informasi Pemilik</div>
-          <div className="space-y-2">
-            <div className="flex items-start">
-              <div className="text-sm text-slate-600 w-24">Nama</div>
-              <div className="text-sm font-medium text-slate-900">{result.owner.name}</div>
-            </div>
-            <div className="flex items-start">
-              <div className="text-sm text-slate-600 w-24">WhatsApp</div>
-              <div className="text-sm font-medium text-slate-900">{result.owner.phone}</div>
+        {/* Owner Information (masked) - Hide if available/no owner */}
+        {result.owner && (
+          <div className="p-4 bg-slate-50">
+            <div className="text-sm text-slate-600 mb-3 font-medium">Informasi Pemilik</div>
+            <div className="space-y-2">
+              <div className="flex items-start">
+                <div className="text-sm text-slate-600 w-24">Nama</div>
+                <div className="text-sm font-medium text-slate-900">{result.owner.name}</div>
+              </div>
+              <div className="flex items-start">
+                <div className="text-sm text-slate-600 w-24">WhatsApp</div>
+                <div className="text-sm font-medium text-slate-900">{result.owner.phone}</div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Information Note */}
@@ -162,9 +172,9 @@ const VerificationResult: React.FC<{ result: VerificationResponse }> = ({ result
             <p className="font-medium mb-1">Informasi Penting:</p>
             <ul className="list-disc list-inside space-y-1 text-blue-800">
               <li>Data pemilik disembunyikan sebagian untuk privasi</li>
-              <li>Status "Valid" berarti kupon belum digunakan</li>
-              <li>Status "Sudah Digunakan" berarti kupon telah diklaim</li>
-              <li>Kupon yang sudah digunakan tidak dapat digunakan lagi</li>
+              <li>Status "Available" (Tersedia) berarti kupon belum dibeli/dimiliki</li>
+              <li>Status "Pending" berarti kupon sedang dalam proses pembelian/verifikasi</li>
+              <li>Status "Valid" berarti kupon sudah sah milik pembeli dan terdaftar untuk undian</li>
             </ul>
           </div>
         </div>
@@ -298,7 +308,7 @@ const VerificationPage: React.FC = () => {
           <div className="bg-slate-50 rounded-lg p-4 space-y-3">
             <div>
               <div className="text-sm font-medium text-slate-700 mb-1">Masukkan Nomor Buku dengan format:</div>
-              <div className="font-mono text-lg font-bold text-blue-600">BUKU-00001</div>
+              <div className="font-mono text-lg font-bold text-blue-600">BUKU-0001</div>
             </div>
             <div className="border-t border-slate-200 pt-3">
               <div className="text-sm font-medium text-slate-700 mb-1">Atau Nomor Kupon dengan format:</div>
@@ -328,24 +338,24 @@ const VerificationPage: React.FC = () => {
               type="text"
               value={inputCode}
               onChange={handleInputChange}
-              placeholder="Contoh: BUKU-00001 atau KPN-00007"
-              className="flex-1 px-4 py-3 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-lg"
+              placeholder="Contoh: BUKU-0001 atau KPN-00007"
+              className="w-full min-w-0 flex-1 px-4 h-10 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-lg"
               disabled={isLoading}
               autoFocus
             />
-            <Button type="submit" disabled={!inputCode || isLoading || !isValidFormat(inputCode)} className="px-6">
+            <Button type="submit" disabled={!inputCode || isLoading || !isValidFormat(inputCode)} className="px-3 sm:px-6">
               {isLoading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-5 w-5 text-white sm:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Verifikasi...
+                  <span className="hidden sm:inline">Verifikasi...</span>
                 </>
               ) : (
                 <>
-                  <Search className="size-5 mr-2" />
-                  Verifikasi
+                  <Search className="size-5 sm:mr-2" />
+                  <span className="hidden sm:inline">Verifikasi</span>
                 </>
               )}
             </Button>
@@ -355,7 +365,7 @@ const VerificationPage: React.FC = () => {
           {inputCode && !isValidFormat(inputCode) && (
             <p className="mt-2 text-sm text-amber-600 flex items-center gap-1">
               <AlertCircle className="size-4" />
-              Format belum sesuai. Gunakan BUKU-00001 atau KPN-00007
+              Format belum sesuai. Gunakan BUKU-0001 atau KPN-00007
             </p>
           )}
         </form>

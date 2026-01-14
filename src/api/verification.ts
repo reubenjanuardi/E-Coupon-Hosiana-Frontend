@@ -6,12 +6,12 @@ import { api } from "./client";
 export interface VerificationResponse {
   type: "BOOK" | "COUPON";
   code: string;
-  status: "valid" | "claimed" | "void";
+  status: "valid" | "pending" | "void" | "available";
   bookCode: string;
   owner: {
     name: string;
     phone: string;
-  };
+  } | null;
 }
 
 export interface VerificationError {
