@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Upload, CreditCard, QrCode, Loader2, CheckCircle2, AlertTriangle, Info, Copy } from "lucide-react";
+import { Upload, CreditCard, QrCode, Loader2, CheckCircle2, AlertTriangle, Info, Copy, Clock } from "lucide-react";
 import QRCode from "qrcode";
 import { clsx } from "clsx";
 import { getQris } from "../../api/payments";
@@ -10,8 +10,10 @@ interface PaymentPanelProps {
   payableAmount: number;
   uniqueCode: number;
   bookCount: number;
+  expiresAt: string;
   onBack: () => void;
   onSubmit: (paymentProof: File) => void;
+  onExpired: () => void;
   isSubmitting: boolean;
   errorMessage?: string | null;
 }
@@ -20,7 +22,14 @@ type PaymentMethod = "QRIS" | "TRANSFER";
 
 const formatCurrency = (value: number) => `Rp ${value.toLocaleString("id-ID")}`;
 
-export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount, payableAmount, uniqueCode, bookCount, onBack, onSubmit, isSubmitting, errorMessage }) => {
+const formatTime = (seconds: number): string => {
+  if (seconds <= 0) return "00:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+};
+
+export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount, payableAmount, uniqueCode, bookCount, expiresAt, onBack, onSubmit, onExpired, isSubmitting, errorMessage }) => {
   const [method, setMethod] = useState<PaymentMethod>("QRIS");
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [isGeneratingQr, setIsGeneratingQr] = useState(false);
@@ -29,10 +38,38 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount,
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [amountCopied, setAmountCopied] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number>(() => {
+    const expiresTime = new Date(expiresAt).getTime();
+    const now = Date.now();
+    return Math.max(0, Math.floor((expiresTime - now) / 1000));
+  });
 
   const rekeningNumber = "0345 01 001 568 566";
 
   const finalAmount = useMemo(() => payableAmount ?? baseAmount, [payableAmount, baseAmount]);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (timeRemaining <= 0) {
+      onExpired();
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        const newValue = prev - 1;
+        if (newValue <= 0) {
+          clearInterval(interval);
+          onExpired();
+          return 0;
+        }
+        return newValue;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timeRemaining, onExpired]);
 
   useEffect(() => {
     if (method !== "QRIS") {
@@ -85,6 +122,24 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount,
 
   return (
     <div className="max-w-2xl mx-auto mt-6 space-y-6">
+      {/* Countdown Timer */}
+      <div
+        className={clsx(
+          "rounded-lg p-4 flex items-center justify-center gap-3 shadow-sm border",
+          timeRemaining > 300
+            ? "bg-blue-50 border-blue-200 text-blue-700"
+            : timeRemaining > 60
+            ? "bg-orange-50 border-orange-200 text-orange-700"
+            : "bg-red-50 border-red-200 text-red-700 animate-pulse"
+        )}
+      >
+        <Clock className="size-5" />
+        <div className="text-center">
+          <p className="text-sm font-medium">Batas Waktu Pembayaran</p>
+          <p className="text-2xl font-bold font-mono">{formatTime(timeRemaining)}</p>
+        </div>
+      </div>
+
       <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Ringkasan Pesanan</h3>
         <div className="flex justify-between items-center py-2 border-b border-gray-100">
@@ -106,7 +161,24 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount,
         <div className="flex justify-between items-center pt-3">
           <span className="text-lg font-medium text-gray-900">Total Pembayaran</span>
           <div className="text-right">
-            <p className="text-xl font-bold text-blue-600">{formatCurrency(finalAmount)}</p>
+            <div className="flex items-center justify-end gap-2">
+              <p className="text-xl font-bold text-blue-600">{formatCurrency(finalAmount)}</p>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(finalAmount.toString());
+                  setAmountCopied(true);
+                  setTimeout(() => setAmountCopied(false), 2000);
+                }}
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+                title="Salin Nominal"
+              >
+                {amountCopied ? (
+                  <CheckCircle2 className="size-4 text-green-600" />
+                ) : (
+                  <Copy className="size-4 text-gray-400" />
+                )}
+              </button>
+            </div>
             <p className="text-xs text-gray-500">Gunakan nominal persis termasuk kode unik</p>
           </div>
         </div>

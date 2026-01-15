@@ -149,10 +149,9 @@ function StepCard({ number, icon, title, description }: StepCardProps) {
 interface LandingPageProps {
   onOrder?: () => void;
   onVerify?: () => void;
-  onAdmin?: () => void;
 }
 
-export default function LandingPage({ onOrder, onVerify, onAdmin }: LandingPageProps) {
+export default function LandingPage({ onOrder, onVerify }: LandingPageProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -365,10 +364,6 @@ export default function LandingPage({ onOrder, onVerify, onAdmin }: LandingPageP
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 items-center">
             <button onClick={onVerify} className="text-blue-600 hover:text-blue-700 font-medium hover:underline">
               Verifikasi Kupon
-            </button>
-            <span className="hidden sm:inline text-slate-300">•</span>
-            <button onClick={onAdmin} className="text-slate-500 hover:text-slate-700 font-medium hover:underline">
-              Admin Login
             </button>
           </div>
         </section>

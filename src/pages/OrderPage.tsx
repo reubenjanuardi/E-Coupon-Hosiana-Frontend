@@ -5,7 +5,8 @@ import { BuyerForm, type BuyerData } from "../components/order/BuyerForm";
 import { CouponSelector } from "../components/order/CouponSelector";
 import { PaymentPanel } from "../components/order/PaymentPanel";
 import { ThankYouScreen } from "../components/order/ThankYouScreen";
-import { createOrder } from "../api/orders";
+import { AlertDialog } from "../components/ui/AlertDialog";
+import { createOrder, cancelOrder } from "../api/orders";
 import { uploadPaymentEvidence } from "../api/payments";
 
 interface OrderInfo {
@@ -14,6 +15,7 @@ interface OrderInfo {
   payableAmount: number;
   uniqueCode: number;
   bookCount: number;
+  expiresAt: string;
 }
 
 const STEPS = ["Data Pembeli", "Pilih Kupon", "Pembayaran"];
@@ -33,6 +35,8 @@ const OrderPage: React.FC = () => {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [completedOrderId, setCompletedOrderId] = useState<string | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const handleBuyerSubmit = (data: BuyerData) => {
     setBuyerData(data);
@@ -78,6 +82,7 @@ const OrderPage: React.FC = () => {
         payableAmount,
         uniqueCode: data.uniqueCode,
         bookCount: data.bookCount ?? selectedCoupons.length,
+        expiresAt: data.expiresAt,
       });
 
       setCurrentStep(3);
@@ -114,8 +119,44 @@ const OrderPage: React.FC = () => {
       navigate("/");
       return;
     }
+    // If on payment step, show confirmation dialog before cancelling
+    if (currentStep === 3 && orderInfo) {
+      setShowCancelDialog(true);
+      return;
+    }
     setCurrentStep((prev) => Math.max(1, prev - 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!orderInfo) return;
+
+    setIsCancelling(true);
+    try {
+      await cancelOrder(orderInfo.orderId);
+      setOrderInfo(null);
+      setSelectedCoupons([]);
+      setPaymentError(null);
+      setShowCancelDialog(false);
+      setCurrentStep(2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error: any) {
+      console.error("Failed to cancel order:", error);
+      setShowCancelDialog(false);
+      // Even if API fails, still navigate back (order will be cancelled by timeout anyway)
+      setOrderInfo(null);
+      setSelectedCoupons([]);
+      setCurrentStep(2);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handleOrderExpired = () => {
+    setOrderInfo(null);
+    setPaymentError(null);
+    alert("Waktu pembayaran telah habis. Pesanan Anda dibatalkan. Silakan coba lagi.");
+    navigate("/");
   };
 
   // Render Success Screen
@@ -158,14 +199,29 @@ const OrderPage: React.FC = () => {
               payableAmount={orderInfo.payableAmount}
               uniqueCode={orderInfo.uniqueCode}
               bookCount={orderInfo.bookCount}
+              expiresAt={orderInfo.expiresAt}
               onBack={handleBack}
               onSubmit={handlePaymentSubmit}
+              onExpired={handleOrderExpired}
               isSubmitting={isSubmitting}
               errorMessage={paymentError}
             />
           </div>
         )}
       </main>
+
+      {/* Cancel Order Confirmation Dialog */}
+      <AlertDialog
+        open={showCancelDialog}
+        onOpenChange={setShowCancelDialog}
+        title="Batalkan Pesanan?"
+        description="Jika anda ingin kembali, maka order ini akan di cancel. Apakah anda ingin meneruskan?"
+        cancelText="Tidak, Lanjutkan Bayar"
+        confirmText="Ya, Batalkan Order"
+        onConfirm={handleConfirmCancel}
+        isLoading={isCancelling}
+        variant="destructive"
+      />
     </div>
   );
 };

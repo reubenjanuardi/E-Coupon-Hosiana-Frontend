@@ -12,7 +12,7 @@ function AppContent() {
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage onOrder={() => navigate("/order")} onVerify={() => navigate("/verify")} onAdmin={() => navigate("/admin")} />} />
+      <Route path="/" element={<LandingPage onOrder={() => navigate("/order")} onVerify={() => navigate("/verify")} />} />
       <Route path="/order" element={<OrderPage />} />
       <Route path="/payment/:orderId" element={<PaymentPage />} />
       <Route path="/verify" element={<VerificationPage />} />
