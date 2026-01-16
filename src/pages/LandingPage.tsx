@@ -90,7 +90,7 @@ function PrizeCarousel() {
   };
 
   return (
-    <div 
+    <div
       className="relative px-12"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -149,9 +149,10 @@ function StepCard({ number, icon, title, description }: StepCardProps) {
 interface LandingPageProps {
   onOrder?: () => void;
   onVerify?: () => void;
+  onAdmin?: () => void;
 }
 
-export default function LandingPage({ onOrder, onVerify }: LandingPageProps) {
+export default function LandingPage({ onOrder, onVerify, onAdmin }: LandingPageProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -427,7 +428,7 @@ export default function LandingPage({ onOrder, onVerify }: LandingPageProps) {
 
           <div className="border-t border-slate-800 pt-8">
             <p className="text-sm text-slate-500">Copyright © 2026 GPIB Hosiana Jakarta</p>
-            <p className="text-xs text-slate-600 mt-2">Made by RJ</p>
+            <p className="text-xs text-slate-600 mt-2">Made by RJ {onAdmin && <button onClick={onAdmin} className="hover:text-slate-400 ml-2"> (Admin)</button>}</p>
           </div>
         </div>
       </footer>
