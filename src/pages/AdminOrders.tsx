@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getOrders, verifyOrder, rejectOrder } from "../api/admin";
 import type { AdminOrder } from "../api/admin";
 import { Check, X, ExternalLink, ChevronLeft, ChevronRight, Search } from "lucide-react";
@@ -119,7 +120,11 @@ export default function AdminOrders() {
                         ) : (
                             orders.map((order) => (
                                 <tr key={order.orderId}>
-                                    <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">{order.orderId}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap font-mono text-xs">
+                                        <Link to={`/admin/orders/${order.orderId}`} className="text-blue-600 hover:underline">
+                                            {order.orderId}
+                                        </Link>
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         Rp {order.payabyleAmount.toLocaleString('id-ID')}
                                     </td>

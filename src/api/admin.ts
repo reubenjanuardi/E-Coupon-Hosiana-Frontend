@@ -53,3 +53,16 @@ export const rejectOrder = async (orderId: string) => {
     const response = await api.post(`/admin/orders/${orderId}/reject`);
     return response.data;
 };
+
+export interface OrderDetail extends AdminOrder {
+    couponBooks: {
+        id: string;
+        bookCode: string;
+        status: string;
+    }[];
+}
+
+export const getOrderById = async (orderId: string) => {
+    const response = await api.get<{ data: OrderDetail }>(`/admin/orders/${orderId}`);
+    return response.data;
+};

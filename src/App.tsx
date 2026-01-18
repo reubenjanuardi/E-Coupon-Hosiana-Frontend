@@ -5,6 +5,7 @@ import VerificationPage from "./pages/VerificationPage.tsx";
 import AdminLayout from "./components/AdminLayout.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AdminOrders from "./pages/AdminOrders.tsx";
+import AdminOrderDetail from "./pages/AdminOrderDetail.tsx";
 
 // Placeholder components for missing pages
 const PaymentPage = () => <div className="p-8 text-center text-2xl">Payment Page (Coming Soon)</div>;
@@ -24,6 +25,7 @@ function AppContent() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
         <Route path="orders" element={<AdminOrders />} />
+        <Route path="orders/:orderId" element={<AdminOrderDetail />} />
       </Route>
     </Routes>
   );
