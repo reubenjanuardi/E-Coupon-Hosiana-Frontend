@@ -275,9 +275,9 @@ export default function LandingPage({ onOrder, onVerify, onAdmin }: LandingPageP
         {/* Hero Content */}
         <div className="relative h-full flex items-center justify-center px-4 pt-20">
           <div className="max-w-4xl mx-auto text-center text-white">
-            <h1 className="mb-6 text-4xl md:text-6xl font-bold text-white drop-shadow-lg">Program E-Kupon Gereja</h1>
+            <h1 className="mb-6 text-4xl md:text-6xl font-bold text-white drop-shadow-lg">Penjualan E-Kupon GPIB Hosiana Jakarta</h1>
             <p className="text-xl md:text-2xl text-blue-50 max-w-2xl mx-auto mb-8 drop-shadow-md leading-relaxed">
-              Dukung program pembangunan gereja dengan membeli buku kupon digital. Setiap buku berisi 10 kupon yang dapat digunakan untuk berbagai keperluan.
+              Dukung program - program gereja dengan membeli buku kupon digital. Setiap buku berisi 10 kupon yang akan diundi pada saat ibadah kenaikan Yesus Kristus.
             </p>
             <Button onClick={() => scrollToSection("order")} size="lg" className="text-blue-700 hover:bg-blue-50 shadow-lg text-lg px-8 py-6 h-auto font-bold">
               Pesan Sekarang
