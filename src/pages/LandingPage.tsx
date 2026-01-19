@@ -90,7 +90,7 @@ function PrizeCarousel() {
   };
 
   return (
-    <div 
+    <div
       className="relative px-12"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -149,9 +149,10 @@ function StepCard({ number, icon, title, description }: StepCardProps) {
 interface LandingPageProps {
   onOrder?: () => void;
   onVerify?: () => void;
+  onAdmin?: () => void;
 }
 
-export default function LandingPage({ onOrder, onVerify }: LandingPageProps) {
+export default function LandingPage({ onOrder, onVerify, onAdmin }: LandingPageProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -274,9 +275,9 @@ export default function LandingPage({ onOrder, onVerify }: LandingPageProps) {
         {/* Hero Content */}
         <div className="relative h-full flex items-center justify-center px-4 pt-20">
           <div className="max-w-4xl mx-auto text-center text-white">
-            <h1 className="mb-6 text-4xl md:text-6xl font-bold text-white drop-shadow-lg">Program E-Kupon Gereja</h1>
+            <h1 className="mb-6 text-4xl md:text-6xl font-bold text-white drop-shadow-lg">Penjualan E-Kupon GPIB Hosiana Jakarta</h1>
             <p className="text-xl md:text-2xl text-blue-50 max-w-2xl mx-auto mb-8 drop-shadow-md leading-relaxed">
-              Dukung program pembangunan gereja dengan membeli buku kupon digital. Setiap buku berisi 10 kupon yang dapat digunakan untuk berbagai keperluan.
+              Dukung program - program gereja dengan membeli buku kupon digital. Setiap buku berisi 10 kupon yang akan diundi pada saat ibadah kenaikan Yesus Kristus.
             </p>
             <Button onClick={() => scrollToSection("order")} size="lg" className="text-blue-700 hover:bg-blue-50 shadow-lg text-lg px-8 py-6 h-auto font-bold">
               Pesan Sekarang
@@ -427,7 +428,7 @@ export default function LandingPage({ onOrder, onVerify }: LandingPageProps) {
 
           <div className="border-t border-slate-800 pt-8">
             <p className="text-sm text-slate-500">Copyright © 2026 GPIB Hosiana Jakarta</p>
-            <p className="text-xs text-slate-600 mt-2">Made by RJ</p>
+            <p className="text-xs text-slate-600 mt-2">Made by RJ {onAdmin && <button onClick={onAdmin} className="hover:text-slate-400 ml-2"> (Admin)</button>}</p>
           </div>
         </div>
       </footer>
