@@ -27,7 +27,7 @@ function AppContent() {
 
       {/* Admin Routes */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin/*" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="orders" element={<AdminOrders />} />
         </Route>
