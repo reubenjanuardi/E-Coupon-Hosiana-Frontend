@@ -5,6 +5,7 @@ import VerificationPage from "./pages/VerificationPage.tsx";
 import AdminLayout from "./components/AdminLayout.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AdminOrders from "./pages/AdminOrders.tsx";
+import AdminOrderDetail from "./pages/AdminOrderDetail.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import { AuthProvider } from "./components/AuthProvider.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
@@ -30,6 +31,7 @@ function AppContent() {
         <Route path="/admin/*" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="orders/:orderId" element={<AdminOrderDetail />} />
         </Route>
       </Route>
     </Routes>
