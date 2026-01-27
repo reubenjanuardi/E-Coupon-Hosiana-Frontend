@@ -66,3 +66,21 @@ export const getOrderById = async (orderId: string) => {
     const response = await api.get<{ data: OrderDetail }>(`/admin/orders/${orderId}`);
     return response.data;
 };
+
+// New Endpoints
+
+export const mergeOrderPdfs = async (orderId: string) => {
+    // ResponseType 'blob' is crucial for PDF downloads
+    const response = await api.post(`/admin/orders/${orderId}/merge-pdf`, {}, { responseType: 'blob' });
+    return response.data; // Blob
+};
+
+export const markOrderSent = async (orderId: string) => {
+    const response = await api.post(`/admin/orders/${orderId}/mark-sent`);
+    return response.data;
+};
+
+export const getWhatsAppMessage = async (orderId: string) => {
+    const response = await api.get<{ data: { phoneNumber: string; message: string } }>(`/admin/orders/${orderId}/whatsapp-message`);
+    return response.data;
+};

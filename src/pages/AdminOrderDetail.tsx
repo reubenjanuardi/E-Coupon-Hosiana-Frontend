@@ -1,14 +1,73 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getOrderById, type OrderDetail } from "../api/admin";
-import { ArrowLeft, ExternalLink, Calendar, CreditCard, User, MapPin, MessageCircle } from "lucide-react";
+import { getOrderById, type OrderDetail, mergeOrderPdfs, markOrderSent, getWhatsAppMessage } from "../api/admin";
+import { ArrowLeft, ExternalLink, Calendar, CreditCard, User, MapPin, MessageCircle, FileText, CheckCircle } from "lucide-react";
 
 export default function AdminOrderDetail() {
     const { orderId } = useParams<{ orderId: string }>();
     const navigate = useNavigate();
     const [order, setOrder] = useState<OrderDetail | null>(null);
     const [loading, setLoading] = useState(true);
+    const [generatingPdf, setGeneratingPdf] = useState(false);
     const [error, setError] = useState("");
+
+
+    const handleGenerateAndSend = async () => {
+        if (!order) return;
+        setGeneratingPdf(true);
+        try {
+            // 1. Generate & Download PDF
+            const blob = await mergeOrderPdfs(order.orderId);
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Order-${order.orderId}-Kupon.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            // 2. Get WhatsApp Message
+            const waData = await getWhatsAppMessage(order.orderId);
+            
+            // 3. Open WhatsApp Web
+            // Encode message properly
+            const encodedMessage = encodeURIComponent(waData.data.message);
+            // Remove leading 0 or + from phone if API returns that, assuming API gave us sanitized or raw
+            // Standardizing to no leading + for wa.me link just in case
+            const cleanPhone = waData.data.phoneNumber.replace(/\D/g, ''); 
+            
+            const waUrl = `https://wa.me/62${cleanPhone}/?text=${encodedMessage}`;
+            window.open(waUrl, '_blank');
+
+            // 4. Update Status locally or Refresh
+            // We want to show the "Mark as Sent" button now
+            // Or if status was already MERGED, it stays MERGED until "Mark as Sent"
+            // Let's re-fetch status to be safe, creating a "MERGED" state UI if backend updated it
+             const updatedOrder = await getOrderById(orderId!);
+             setOrder(updatedOrder.data);
+
+        } catch (err) {
+            console.error("Failed to generate PDF path", err);
+            alert("Failed to generate PDF or WhatsApp message.");
+        } finally {
+            setGeneratingPdf(false);
+        }
+    };
+
+    const handleMarkAsSent = async () => {
+        if (!order || !confirm("Pastikan Anda sudah mengirimkan file PDF ke customer via WhatsApp.\n\nTandai order sebagai TERKIRIM?")) return;
+        
+        try {
+            await markOrderSent(order.orderId);
+            // Refresh order state
+            const updatedOrder = await getOrderById(orderId!);
+            setOrder(updatedOrder.data);
+
+        } catch (err) {
+            console.error(err);
+            alert("Failed to update status.");
+        }
+    };
 
     useEffect(() => {
         if (!orderId) return;
@@ -28,15 +87,63 @@ export default function AdminOrderDetail() {
     return (
         <div className="max-w-4xl mx-auto pb-10">
             {/* Header / Back Button */}
-            <div className="mb-6 flex items-center gap-4">
-                <button 
-                    onClick={() => navigate("/admin/orders")}
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-                >
-                    <ArrowLeft size={20} />
-                    Back to Orders
-                </button>
-                <h2 className="text-2xl font-bold text-gray-800">Order Details</h2>
+            {/* Header / Back Button */}
+            <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={() => navigate("/admin/orders")}
+                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                        <ArrowLeft size={20} />
+                        Back to Orders
+                    </button>
+                    <h2 className="text-2xl font-bold text-gray-800">Order Details</h2>
+                </div>
+
+                {/* Primary Actions */}
+                <div className="flex items-center gap-3">
+                    {order.status === 'MERGED' && (
+                        <button
+                            onClick={handleMarkAsSent}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-sm font-medium"
+                        >
+                            <CheckCircle size={18} />
+                            Tandai sebagai Terkirim
+                        </button>
+                    )}
+
+                    {/* Generate & Send Button */}
+                    {(order.status === 'verified' || order.status === 'MERGED') && (
+                         <button
+                            onClick={handleGenerateAndSend}
+                            disabled={generatingPdf}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white shadow-sm font-medium transition-all
+                                ${generatingPdf 
+                                    ? 'bg-gray-400 cursor-not-allowed' 
+                                    : 'bg-green-600 hover:bg-green-700'
+                                }`}
+                        >
+                            {generatingPdf ? (
+                                <>
+                                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                    Generating PDF...
+                                </>
+                            ) : (
+                                <>
+                                    <FileText size={18} />
+                                    Generate & Kirim WA
+                                </>
+                            )}
+                        </button>
+                    )}
+
+                     {order.status === 'SENT' && (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg border border-gray-200">
+                            <CheckCircle size={18} className="text-green-600" />
+                            <span className="font-medium">Sudah Terkirim</span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Main Content Grid */}
