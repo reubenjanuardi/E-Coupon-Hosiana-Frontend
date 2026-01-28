@@ -162,7 +162,7 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount,
           <span className="text-lg font-medium text-gray-900">Total Pembayaran</span>
           <div className="text-right">
             <div className="flex items-center justify-end gap-2">
-              <p className="text-xl font-bold text-blue-600">{formatCurrency(finalAmount)}</p>
+              <p className="text-xl font-bold text-blue-600">{formatCurrency(payableAmount ?? baseAmount)}</p>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(finalAmount.toString());
@@ -313,8 +313,8 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount,
       </div>
 
       <div className="flex gap-3 pt-2">
-        <button onClick={onBack} disabled={isSubmitting} className="flex-1 py-3 px-4 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50">
-          Kembali
+        <button onClick={onBack} disabled={isSubmitting} className="flex-1 py-3 px-4 border border-red-200 bg-red-50 text-red-600 rounded-lg font-medium hover:bg-red-100 transition-colors disabled:opacity-50">
+          Batalkan Pesanan
         </button>
         <button
           onClick={handleSubmit}
