@@ -74,19 +74,9 @@ const OrderPage: React.FC = () => {
       const order = response.data ?? response;
       const data = order.data ?? order;
 
-      const payableAmount = data.payabyleAmount ?? data.payableAmount ?? data.totalAmount + (data.uniqueCode ?? 0);
 
-      setOrderInfo({
-        orderId: data.orderId,
-        totalAmount: data.totalAmount,
-        payableAmount,
-        uniqueCode: data.uniqueCode,
-        bookCount: data.bookCount ?? selectedCoupons.length,
-        expiresAt: data.expiresAt,
-      });
-
-      setCurrentStep(3);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Redirect to dynamic payment page
+      navigate(`/payment/${data.orderId}?token=${data.paymentToken}`);
     } catch (error: any) {
       const message = error?.response?.data?.message || "Gagal membuat order. Coba lagi.";
       setOrderError(message);
@@ -120,6 +110,8 @@ const OrderPage: React.FC = () => {
       return;
     }
     // If on payment step, show confirmation dialog before cancelling
+    // Note: Step 3 is now external, so this logic might be redundant if we don't use step 3 anymore.
+    // However, if we keep the steps array for visual consistency, we just stop at step 2.
     if (currentStep === 3 && orderInfo) {
       setShowCancelDialog(true);
       return;

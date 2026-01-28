@@ -10,8 +10,7 @@ import LoginPage from "./pages/LoginPage.tsx";
 import { AuthProvider } from "./components/AuthProvider.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
 
-// Placeholder components for missing pages
-const PaymentPage = () => <div className="p-8 text-center text-2xl">Payment Page (Coming Soon)</div>;
+import PaymentPage from "./pages/PaymentPage.tsx";
 
 function AppContent() {
   const navigate = useNavigate();
