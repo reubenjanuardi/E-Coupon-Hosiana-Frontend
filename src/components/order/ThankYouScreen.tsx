@@ -26,7 +26,7 @@ export const ThankYouScreen: React.FC<ThankYouScreenProps> = ({ orderId }) => {
 
         <div className="space-y-3 text-sm text-gray-600 mb-8">
           <p>
-            Pembayaran Anda akan diverifikasi maksimal <span className="font-semibold text-gray-900">1x24 jam</span>.
+            Pembayaran Anda akan diverifikasi maksimal <span className="font-semibold text-gray-900">2x24 jam</span>.
           </p>
           <p>Kupon akan dikirim melalui WhatsApp setelah pembayaran terverifikasi.</p>
         </div>
