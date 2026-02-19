@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getOrders, verifyOrder, rejectOrder } from "../api/admin";
+import { getOrders, verifyOrder, rejectOrder, deleteOrder } from "../api/admin";
 import type { AdminOrder } from "../api/admin";
 import { Check, X, ExternalLink, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { useAuth } from "../components/AuthProvider";
+import CreateOrderModal from "../components/CreateOrderModal";
+import EditOrderModal from "../components/EditOrderModal";
 
 export default function AdminOrders() {
     const [orders, setOrders] = useState<AdminOrder[]>([]);
@@ -13,6 +16,10 @@ export default function AdminOrders() {
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState("desc");
     const [refreshKey, setRefreshKey] = useState(0); // to force reload
+
+    const { user } = useAuth();
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingOrder, setEditingOrder] = useState<AdminOrder | null>(null);
 
     useEffect(() => {
         setLoading(true);
@@ -56,9 +63,31 @@ export default function AdminOrders() {
         }
     };
 
+    const handleDelete = async (orderId: string) => {
+        if (!confirm("DANGER: This will PERMANENTLY DELETE the order and all related data. This action cannot be undone. Are you sure?")) return;
+        try {
+            await deleteOrder(orderId);
+            setRefreshKey((k) => k + 1);
+            alert("Order deleted successfully");
+        } catch (err) {
+            alert("Failed to delete order");
+            console.error(err);
+        }
+    }
+
     return (
         <div>
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Order Management</h2>
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">Order Management</h2>
+                {user?.role === 'superadmin' && (
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
+                    >
+                        + Create Order
+                    </button>
+                )}
+            </div>
 
             {/* Controls */}
             <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between">
@@ -72,6 +101,8 @@ export default function AdminOrders() {
                         <option value="pending_payment">Pending Payment</option>
                         <option value="pending_verification">Pending Verification</option>
                         <option value="verified">Verified</option>
+                        <option value="MERGED">Merged</option>
+                        <option value="SENT">Sent</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
 
@@ -147,9 +178,13 @@ export default function AdminOrders() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                ${order.status === 'verified' ? 'bg-green-100 text-green-800' :
-                                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'}`}>
+                                ${order.status === 'verified' ? 'bg-blue-100 text-blue-800' :
+                                  order.status === 'pending_verification' ? 'bg-orange-100 text-orange-800' :
+                                  order.status === 'pending_payment' ? 'bg-gray-100 text-gray-800' :
+                                  order.status === 'MERGED' ? 'bg-green-100 text-green-800' : // Light Green
+                                  order.status === 'SENT' ? 'bg-green-600 text-white' : // Green (Darker for Sent)
+                                  order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                  'bg-gray-100 text-gray-800'}`}>
                                             {order.status.replace('_', ' ')}
                                         </span>
                                     </td>
@@ -166,24 +201,44 @@ export default function AdminOrders() {
                                         ) : "-"}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        {order.status === 'pending_verification' && (
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleVerify(order.orderId)}
-                                                    className="text-green-600 hover:text-green-900 p-1 border border-green-200 rounded hover:bg-green-50"
-                                                    title="Verify (Valid)"
-                                                >
-                                                    <Check size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleReject(order.orderId)}
-                                                    className="text-red-600 hover:text-red-900 p-1 border border-red-200 rounded hover:bg-red-50"
-                                                    title="Reject (Invalid)"
-                                                >
-                                                    <X size={16} />
-                                                </button>
-                                            </div>
-                                        )}
+                                        <div className="flex gap-2 items-center">
+                                            {order.status === 'pending_verification' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleVerify(order.orderId)}
+                                                        className="text-green-600 hover:text-green-900 p-1 border border-green-200 rounded hover:bg-green-50"
+                                                        title="Verify (Valid)"
+                                                    >
+                                                        <Check size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleReject(order.orderId)}
+                                                        className="text-red-600 hover:text-red-900 p-1 border border-red-200 rounded hover:bg-red-50"
+                                                        title="Reject (Invalid)"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                </>
+                                            )}
+                                            {user?.role === 'superadmin' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => setEditingOrder(order)}
+                                                        className="text-blue-600 hover:text-blue-900 p-1 border border-blue-200 rounded hover:bg-blue-50 ml-2"
+                                                        title="Edit (Superadmin)"
+                                                    >
+                                                        <span className="font-bold text-xs px-1">EDIT</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(order.orderId)}
+                                                        className="text-red-600 hover:text-red-900 p-1 border border-red-200 rounded hover:bg-red-50 ml-1"
+                                                        title="Delete (Superadmin)"
+                                                    >
+                                                        <span className="font-bold text-xs px-1">DEL</span>
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))
@@ -212,6 +267,22 @@ export default function AdminOrders() {
                     <ChevronRight size={16} />
                 </button>
             </div>
+
+            <CreateOrderModal 
+                isOpen={showCreateModal} 
+                onClose={() => setShowCreateModal(false)}
+                onSuccess={() => setRefreshKey(prev => prev + 1)}
+            />
+            
+            <EditOrderModal
+                isOpen={!!editingOrder}
+                onClose={() => setEditingOrder(null)}
+                order={editingOrder}
+                onSuccess={() => {
+                    setEditingOrder(null);
+                    setRefreshKey(prev => prev + 1);
+                }}
+            />
         </div>
     );
 }

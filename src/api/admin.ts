@@ -18,6 +18,8 @@ export interface AdminOrder {
         namaLengkap: string;
         nomorWhatsApp: string;
         asalPembeli: string;
+        wilayahId?: number;
+        gerejaId?: number;
         wilayah?: { nama_wilayah: string };
         gereja?: { nama_gereja: string };
     };
@@ -82,5 +84,21 @@ export const markOrderSent = async (orderId: string) => {
 
 export const getWhatsAppMessage = async (orderId: string) => {
     const response = await api.get<{ data: { phoneNumber: string; message: string } }>(`/admin/orders/${orderId}/whatsapp-message`);
+    return response.data;
+};
+
+// Superadmin CRUD
+export const createOrder = async (data: any) => {
+    const response = await api.post("/admin/orders", data);
+    return response.data;
+};
+
+export const updateOrder = async (orderId: string, data: any) => {
+    const response = await api.put(`/admin/orders/${orderId}`, data);
+    return response.data;
+};
+
+export const deleteOrder = async (orderId: string) => {
+    const response = await api.delete(`/admin/orders/${orderId}`);
     return response.data;
 };
