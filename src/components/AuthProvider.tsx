@@ -4,7 +4,7 @@ import { api } from "../api/client";
 interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
-    user: { username: string } | null;
+    user: { username: string; role?: string } | null;
     login: (credentials: any) => Promise<void>;
     logout: () => Promise<void>;
 }
@@ -13,7 +13,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [user, setUser] = useState<{ username: string } | null>(null);
+    const [user, setUser] = useState<{ username: string; role?: string } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     // Check authentication status on mount

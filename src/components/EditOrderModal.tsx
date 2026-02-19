@@ -1,0 +1,238 @@
+import React, { useState, useEffect } from "react";
+import { X, Loader2 } from "lucide-react";
+import { api } from "../api/client";
+import { updateOrder } from "../api/admin";
+import type { AdminOrder } from "../api/admin";
+
+interface EditOrderModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSuccess: () => void;
+    order: AdminOrder | null;
+}
+
+interface Wilayah {
+    id: number;
+    nama_wilayah: string;
+}
+
+interface Gereja {
+    id: number;
+    nama_gereja: string;
+}
+
+export default function EditOrderModal({ isOpen, onClose, onSuccess, order }: EditOrderModalProps) {
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        customerName: "",
+        customerWhatsApp: "",
+        asalPembeli: "UMUM", // GPIB | UMUM
+        wilayahId: "",
+        gerejaId: "",
+        status: "",
+    });
+
+    const [wilayahList, setWilayahList] = useState<Wilayah[]>([]);
+    const [churchList, setChurchList] = useState<Gereja[]>([]);
+    const [loadingWilayah, setLoadingWilayah] = useState(false);
+    const [loadingChurch, setLoadingChurch] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && order) {
+            // Populate form data from order
+            setFormData({
+                customerName: order.customer.namaLengkap,
+                customerWhatsApp: order.customer.nomorWhatsApp,
+                asalPembeli: order.customer.asalPembeli,
+                wilayahId: order.customer.wilayahId ? String(order.customer.wilayahId) : "",
+                gerejaId: order.customer.gerejaId ? String(order.customer.gerejaId) : "",
+                status: order.status,
+            });
+            fetchWilayah();
+        }
+    }, [isOpen, order]);
+
+    useEffect(() => {
+        if (formData.wilayahId) {
+            fetchChurches(formData.wilayahId);
+        } else {
+            setChurchList([]);
+        }
+    }, [formData.wilayahId]);
+
+    const fetchWilayah = async () => {
+        try {
+            setLoadingWilayah(true);
+            const res = await api.get("/public/wilayah");
+            setWilayahList(res.data);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoadingWilayah(false);
+        }
+    };
+
+    const fetchChurches = async (id: string) => {
+        try {
+            setLoadingChurch(true);
+            const res = await api.get(`/public/wilayah/${id}/gereja`);
+            setChurchList(res.data);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoadingChurch(false);
+        }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!order) return;
+        
+        setLoading(true);
+        try {
+            await updateOrder(order.orderId, {
+                status: formData.status,
+                customerName: formData.customerName,
+                customerWhatsApp: formData.customerWhatsApp,
+                asalPembeli: formData.asalPembeli,
+                wilayahId: formData.asalPembeli === 'GPIB' && formData.wilayahId ? Number(formData.wilayahId) : null,
+                gerejaId: formData.asalPembeli === 'GPIB' && formData.gerejaId ? Number(formData.gerejaId) : null,
+            });
+            onSuccess();
+            onClose();
+        } catch (err) {
+            alert("Failed to update order");
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!isOpen || !order) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center p-4 border-b">
+                    <h3 className="text-lg font-semibold">Edit Order: {order.orderId}</h3>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-4 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                             <label className="block text-sm font-medium mb-1">Status</label>
+                             <select 
+                                name="status"
+                                value={formData.status}
+                                onChange={handleChange}
+                                className="w-full border rounded p-2 bg-yellow-50"
+                             >
+                                <option value="pending_payment">Pending Payment</option>
+                                <option value="pending_verification">Pending Verification</option>
+                                <option value="verified">Verified</option>
+                                <option value="MERGED">MERGED (PDF Generated)</option>
+                                <option value="SENT">SENT (Done)</option>
+                                <option value="cancelled">Cancelled</option>
+                             </select>
+                        </div>
+                        
+                        <div className="col-span-2">
+                             <label className="block text-sm font-medium mb-1">Full Name</label>
+                             <input 
+                                name="customerName"
+                                value={formData.customerName}
+                                onChange={handleChange}
+                                className="w-full border rounded p-2"
+                                required
+                             />
+                        </div>
+                        <div className="col-span-2">
+                             <label className="block text-sm font-medium mb-1">WhatsApp</label>
+                             <input 
+                                name="customerWhatsApp"
+                                value={formData.customerWhatsApp}
+                                onChange={handleChange}
+                                className="w-full border rounded p-2"
+                                required
+                             />
+                        </div>
+
+                        <div className="col-span-2">
+                             <label className="block text-sm font-medium mb-1">Origin</label>
+                             <select 
+                                name="asalPembeli"
+                                value={formData.asalPembeli}
+                                onChange={handleChange}
+                                className="w-full border rounded p-2"
+                             >
+                                <option value="UMUM">UMUM</option>
+                                <option value="GPIB">GPIB</option>
+                             </select>
+                        </div>
+
+                        {formData.asalPembeli === 'GPIB' && (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Wilayah</label>
+                                    <select 
+                                        name="wilayahId"
+                                        value={formData.wilayahId}
+                                        onChange={handleChange}
+                                        className="w-full border rounded p-2"
+                                        disabled={loadingWilayah}
+                                    >
+                                        <option value="">Select Wilayah</option>
+                                        {wilayahList.map(w => (
+                                            <option key={w.id} value={w.id}>{w.nama_wilayah}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Gereja</label>
+                                    <select 
+                                        name="gerejaId"
+                                        value={formData.gerejaId}
+                                        onChange={handleChange}
+                                        className="w-full border rounded p-2"
+                                        disabled={!formData.wilayahId || loadingChurch}
+                                    >
+                                        <option value="">Select Gereja</option>
+                                        {churchList.map(g => (
+                                            <option key={g.id} value={g.id}>{g.nama_gereja}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-4 border-t">
+                        <button 
+                            type="button" 
+                            onClick={onClose}
+                            className="px-4 py-2 border rounded hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit" 
+                            disabled={loading}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+                        >
+                            {loading && <Loader2 className="animate-spin" size={16} />}
+                            Update Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
