@@ -24,6 +24,7 @@ export interface AdminOrder {
         gereja?: { nama_gereja: string };
     };
     payments?: { id: string; fileUrl: string; uploadedAt: string }[];
+    isChurchOrder: boolean;
 }
 
 export interface OrderListResponse {
@@ -100,5 +101,10 @@ export const updateOrder = async (orderId: string, data: any) => {
 
 export const deleteOrder = async (orderId: string) => {
     const response = await api.delete(`/admin/orders/${orderId}`);
+    return response.data;
+};
+
+export const toggleChurchOrder = async (orderId: string) => {
+    const response = await api.patch(`/admin/orders/${orderId}/toggle-church`);
     return response.data;
 };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getOrders, verifyOrder, rejectOrder, deleteOrder } from "../api/admin";
+import { getOrders, verifyOrder, rejectOrder, deleteOrder, toggleChurchOrder } from "../api/admin";
 import type { AdminOrder } from "../api/admin";
 import { Check, X, ExternalLink, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useAuth } from "../components/AuthProvider";
@@ -160,7 +160,14 @@ export default function AdminOrders() {
                                         Rp {order.payabyleAmount.toLocaleString('id-ID')}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="font-medium text-gray-900">{order.customer.namaLengkap}</div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="font-medium text-gray-900">{order.customer.namaLengkap}</div>
+                                            {order.isChurchOrder && (
+                                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                                                    CHURCH
+                                                </span>
+                                            )}
+                                        </div>
                                         <div className="text-gray-500 text-xs">{order.customer.nomorWhatsApp}</div>
                                     </td>
                                     <td className="px-6 py-4 text-xs">
@@ -202,6 +209,25 @@ export default function AdminOrders() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex gap-2 items-center">
+                                            {/* Church Order Toggle */}
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        const res = await toggleChurchOrder(order.orderId);
+                                                        // Update local state based on response or just toggle
+                                                        const newStatus = res.data.isChurchOrder; 
+                                                        setOrders(orders.map(o => o.orderId === order.orderId ? { ...o, isChurchOrder: newStatus } : o));
+                                                    } catch (err) {
+                                                        console.error("Failed to update church order status", err);
+                                                        alert("Failed to update status");
+                                                    }
+                                                }}
+                                                className={`p-1 border rounded ml-1 ${order.isChurchOrder ? 'bg-purple-100 text-purple-800 border-purple-200' : 'text-gray-400 border-gray-200 hover:bg-gray-50'}`}
+                                                title={order.isChurchOrder ? "Church Order" : "Mark as Church Order"}
+                                            >
+                                                <span className="font-bold text-xs px-1">{order.isChurchOrder ? 'CHURCH' : 'PRSNL'}</span>
+                                            </button>
+
                                             {order.status === 'pending_verification' && (
                                                 <>
                                                     <button
