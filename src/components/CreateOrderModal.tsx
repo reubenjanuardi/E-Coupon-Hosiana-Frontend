@@ -20,8 +20,10 @@ interface Gereja {
 }
 
 interface AvailableBook {
-    bookCode: string;
-    orderId: string | null;
+    id: string;       // bookCode from API
+    name: string;
+    available: boolean;
+    price: number;
 }
 
 export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateOrderModalProps) {
@@ -40,9 +42,12 @@ export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateO
     const [loadingWilayah, setLoadingWilayah] = useState(false);
     const [loadingChurch, setLoadingChurch] = useState(false);
 
-    // Coupon Book Selector State
-    const [availableBooks, setAvailableBooks] = useState<AvailableBook[]>([]);
+    // Coupon Book Selector State — cursor-based infinite scroll (matches CouponSelector)
+    const ITEMS_PER_PAGE = 30;
+    const [books, setBooks] = useState<AvailableBook[]>([]);
     const [loadingBooks, setLoadingBooks] = useState(false);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [hasMore, setHasMore] = useState(true);
     const [bookSearch, setBookSearch] = useState("");
     const [selectedBooks, setSelectedBooks] = useState<string[]>([]);
 
@@ -50,11 +55,34 @@ export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateO
     const totalAmount = selectedBooks.length * PRICE_PER_BOOK;
     const payabyleAmount = totalAmount + Number(formData.uniqueCode);
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchWilayah();
-            fetchAvailableBooks();
+    const fetchBooks = useCallback(async (reset = false, cursor: string | null = null, search = "") => {
+        try {
+            setLoadingBooks(true);
+            const response = await api.get("/coupons/books", {
+                params: { limit: ITEMS_PER_PAGE, cursor, search, available: true },
+            });
+            const { data, nextCursor: newNextCursor } = response.data;
+            setBooks(prev => (reset ? data : [...prev, ...data]));
+            setNextCursor(newNextCursor);
+            setHasMore(!!newNextCursor);
+        } catch (err) {
+            console.error("Failed to fetch books:", err);
+        } finally {
+            setLoadingBooks(false);
         }
+    }, []);
+
+    // Reset + load on open or search change (debounced)
+    useEffect(() => {
+        if (!isOpen) return;
+        const timer = setTimeout(() => {
+            fetchBooks(true, null, bookSearch);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [isOpen, bookSearch, fetchBooks]);
+
+    useEffect(() => {
+        if (isOpen) fetchWilayah();
     }, [isOpen]);
 
     useEffect(() => {
@@ -89,24 +117,13 @@ export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateO
         }
     };
 
-    const fetchAvailableBooks = useCallback(async () => {
-        try {
-            setLoadingBooks(true);
-            // Fetch all unassigned coupon books
-            const res = await api.get("/coupons/books", {
-                params: { available: true, limit: 200 },
-            });
-            const books: AvailableBook[] = (res.data.data || res.data).map((b: any) => ({
-                bookCode: b.id || b.bookCode,
-                orderId: b.orderId ?? null,
-            }));
-            setAvailableBooks(books);
-        } catch (err) {
-            console.error("Failed to fetch available books:", err);
-        } finally {
-            setLoadingBooks(false);
+    // Infinite scroll handler (same as CouponSelector)
+    const handleBookScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+        if (scrollHeight - scrollTop <= clientHeight + 50 && !loadingBooks && hasMore) {
+            fetchBooks(false, nextCursor, bookSearch);
         }
-    }, []);
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -119,9 +136,6 @@ export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateO
         );
     };
 
-    const filteredBooks = availableBooks.filter(b =>
-        b.bookCode.toLowerCase().includes(bookSearch.toLowerCase())
-    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -265,23 +279,19 @@ export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateO
                             />
                         </div>
 
-                        <div className="border rounded h-48 overflow-y-auto bg-gray-50">
-                            {loadingBooks ? (
-                                <div className="flex justify-center items-center h-full">
-                                    <Loader2 className="animate-spin text-gray-400" size={24} />
-                                </div>
-                            ) : filteredBooks.length === 0 ? (
+                        <div className="border rounded h-48 overflow-y-auto bg-gray-50" onScroll={handleBookScroll}>
+                            {books.length === 0 && !loadingBooks ? (
                                 <div className="flex justify-center items-center h-full text-gray-400 text-sm">
                                     No available books found
                                 </div>
                             ) : (
                                 <div className="p-2 space-y-1">
-                                    {filteredBooks.map(book => {
-                                        const isSelected = selectedBooks.includes(book.bookCode);
+                                    {books.map(book => {
+                                        const isSelected = selectedBooks.includes(book.id);
                                         return (
                                             <div
-                                                key={book.bookCode}
-                                                onClick={() => toggleBook(book.bookCode)}
+                                                key={book.id}
+                                                onClick={() => toggleBook(book.id)}
                                                 className={`flex items-center justify-between px-3 py-2 rounded cursor-pointer select-none border transition-all ${
                                                     isSelected
                                                         ? "bg-blue-50 border-blue-400 text-blue-800"
@@ -292,7 +302,7 @@ export default function CreateOrderModal({ isOpen, onClose, onSuccess }: CreateO
                                                     <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? "bg-blue-600 border-blue-600" : "border-gray-400"}`}>
                                                         {isSelected && <Check size={11} className="text-white" strokeWidth={3} />}
                                                     </div>
-                                                    <span className="text-sm font-mono">{book.bookCode}</span>
+                                                    <span className="text-sm font-mono">{book.name}</span>
                                                 </div>
                                                 <span className="text-xs text-gray-500">Rp 100.000</span>
                                             </div>
