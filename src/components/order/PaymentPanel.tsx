@@ -23,10 +23,11 @@ type PaymentMethod = "QRIS" | "TRANSFER";
 const formatCurrency = (value: number) => `Rp ${value.toLocaleString("id-ID")}`;
 
 const formatTime = (seconds: number): string => {
-  if (seconds <= 0) return "00:00";
-  const mins = Math.floor(seconds / 60);
+  if (seconds <= 0) return "00:00:00";
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 };
 
 export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount, payableAmount, uniqueCode, bookCount, expiresAt, onBack, onSubmit, onExpired, isSubmitting, errorMessage }) => {
@@ -126,9 +127,9 @@ export const PaymentPanel: React.FC<PaymentPanelProps> = ({ orderId, baseAmount,
       <div
         className={clsx(
           "rounded-lg p-4 flex items-center justify-center gap-3 shadow-sm border",
-          timeRemaining > 300
+          timeRemaining > 7200   // > 2h = blue
             ? "bg-blue-50 border-blue-200 text-blue-700"
-            : timeRemaining > 60
+            : timeRemaining > 1800 // > 30min = orange
             ? "bg-orange-50 border-orange-200 text-orange-700"
             : "bg-red-50 border-red-200 text-red-700 animate-pulse"
         )}
