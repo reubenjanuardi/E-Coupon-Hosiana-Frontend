@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Upload, CheckCircle2, ExternalLink } from "lucide-react";
 import { api } from "../api/client";
 import { updateOrder } from "../api/admin";
+import { uploadPaymentEvidence } from "../api/payments";
 import type { AdminOrder } from "../api/admin";
 
 interface EditOrderModalProps {
@@ -37,6 +38,10 @@ export default function EditOrderModal({ isOpen, onClose, onSuccess, order }: Ed
     const [loadingWilayah, setLoadingWilayah] = useState(false);
     const [loadingChurch, setLoadingChurch] = useState(false);
 
+    // Payment evidence
+    const [evidenceFile, setEvidenceFile] = useState<File | null>(null);
+    const [uploadingEvidence, setUploadingEvidence] = useState(false);
+
     useEffect(() => {
         if (isOpen && order) {
             // Populate form data from order
@@ -48,6 +53,7 @@ export default function EditOrderModal({ isOpen, onClose, onSuccess, order }: Ed
                 gerejaId: order.customer.gerejaId ? String(order.customer.gerejaId) : "",
                 status: order.status,
             });
+            setEvidenceFile(null);
             fetchWilayah();
         }
     }, [isOpen, order]);
@@ -95,6 +101,7 @@ export default function EditOrderModal({ isOpen, onClose, onSuccess, order }: Ed
         
         setLoading(true);
         try {
+            // 1. Update order details
             await updateOrder(order.orderId, {
                 status: formData.status,
                 customerName: formData.customerName,
@@ -103,6 +110,20 @@ export default function EditOrderModal({ isOpen, onClose, onSuccess, order }: Ed
                 wilayahId: formData.asalPembeli === 'GPIB' && formData.wilayahId ? Number(formData.wilayahId) : null,
                 gerejaId: formData.asalPembeli === 'GPIB' && formData.gerejaId ? Number(formData.gerejaId) : null,
             });
+
+            // 2. Upload evidence if a file was selected
+            if (evidenceFile) {
+                setUploadingEvidence(true);
+                try {
+                    await uploadPaymentEvidence(order.orderId, evidenceFile);
+                } catch (uploadErr) {
+                    console.error("Evidence upload failed:", uploadErr);
+                    alert("Order updated, but evidence upload failed. Please try uploading it again.");
+                } finally {
+                    setUploadingEvidence(false);
+                }
+            }
+
             onSuccess();
             onClose();
         } catch (err) {
@@ -214,6 +235,51 @@ export default function EditOrderModal({ isOpen, onClose, onSuccess, order }: Ed
                         )}
                     </div>
 
+                    {/* Payment Evidence */}
+                    <div className="col-span-2 border-t pt-4">
+                        <label className="block text-sm font-medium mb-2">Payment Evidence</label>
+
+                        {/* Existing evidence */}
+                        {order.payments && order.payments.length > 0 && (
+                            <div className="mb-3 space-y-1">
+                                <p className="text-xs text-gray-500 mb-1">Existing uploads:</p>
+                                {order.payments.map(p => (
+                                    <a
+                                        key={p.id}
+                                        href={p.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                    >
+                                        <ExternalLink size={13} />
+                                        {new Date(p.uploadedAt).toLocaleString()}
+                                    </a>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Upload new evidence */}
+                        <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors relative">
+                            <input
+                                type="file"
+                                accept="image/*,application/pdf"
+                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                onChange={e => setEvidenceFile(e.target.files?.[0] ?? null)}
+                            />
+                            {evidenceFile ? (
+                                <div className="flex items-center gap-2 text-green-700">
+                                    <CheckCircle2 size={16} />
+                                    <span className="text-sm font-medium">{evidenceFile.name}</span>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center text-gray-400">
+                                    <Upload size={20} className="mb-1" />
+                                    <span className="text-xs">Upload new evidence (JPG, PNG, PDF)</span>
+                                </div>
+                            )}
+                        </label>
+                    </div>
+
                     <div className="flex justify-end gap-2 pt-4 border-t">
                         <button 
                             type="button" 
@@ -224,11 +290,11 @@ export default function EditOrderModal({ isOpen, onClose, onSuccess, order }: Ed
                         </button>
                         <button 
                             type="submit" 
-                            disabled={loading}
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+                            disabled={loading || uploadingEvidence}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2 disabled:opacity-60"
                         >
-                            {loading && <Loader2 className="animate-spin" size={16} />}
-                            Update Order
+                            {(loading || uploadingEvidence) && <Loader2 className="animate-spin" size={16} />}
+                            {uploadingEvidence ? "Uploading Evidence..." : "Update Order"}
                         </button>
                     </div>
                 </form>
