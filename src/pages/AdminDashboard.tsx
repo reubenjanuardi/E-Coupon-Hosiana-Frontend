@@ -6,12 +6,18 @@ import { BookOpen, CheckCircle, Clock, CreditCard } from "lucide-react";
 export default function AdminDashboard() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         getDashboardStats()
             .then(setStats)
-            .catch((err) => console.error(err))
+            .catch((err) => {
+                console.error(err);
+                const msg = err?.response?.data?.message || err?.message || 'Unknown error';
+                setError(`Failed to load stats: ${err?.response?.status ?? ''} ${msg}`);
+            })
             .finally(() => setLoading(false));
+
     }, []);
 
     if (loading) {
@@ -19,7 +25,7 @@ export default function AdminDashboard() {
     }
 
     if (!stats) {
-        return <div className="p-8 text-red-500">Failed to load stats.</div>;
+        return <div className="p-8 text-red-500">{error || 'Failed to load stats.'}</div>;
     }
 
     const cards = [
