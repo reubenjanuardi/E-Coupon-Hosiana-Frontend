@@ -42,7 +42,7 @@ export const getDashboardStats = async () => {
     return response.data.data;
 };
 
-export const getOrders = async (params: { page: number; limit: number; status?: string; search?: string; sort?: string }) => {
+export const getOrders = async (params: { page: number; limit: number; status?: string; search?: string; sort?: string; origin?: string }) => {
     const response = await api.get<OrderListResponse>("/admin/orders", { params });
     return response.data;
 };

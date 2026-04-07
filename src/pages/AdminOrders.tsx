@@ -13,6 +13,7 @@ export default function AdminOrders() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [statusFilter, setStatusFilter] = useState("");
+    const [originFilter, setOriginFilter] = useState("");
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState("desc");
     const [refreshKey, setRefreshKey] = useState(0); // to force reload
@@ -27,6 +28,7 @@ export default function AdminOrders() {
             page,
             limit: 10,
             status: statusFilter === "all" ? undefined : statusFilter,
+            origin: originFilter === "all" ? undefined : originFilter,
             search,
             sort
         })
@@ -39,7 +41,7 @@ export default function AdminOrders() {
                 setOrders([]);
             })
             .finally(() => setLoading(false));
-    }, [page, statusFilter, search, sort, refreshKey]);
+    }, [page, statusFilter, originFilter, search, sort, refreshKey]);
 
     const handleVerify = async (orderId: string) => {
         if (!confirm("Are you sure you want to verify this order?")) return;
@@ -104,6 +106,16 @@ export default function AdminOrders() {
                         <option value="MERGED">Merged</option>
                         <option value="SENT">Sent</option>
                         <option value="cancelled">Cancelled</option>
+                    </select>
+
+                    <select
+                        className="border rounded px-3 py-2 bg-white"
+                        value={originFilter}
+                        onChange={(e) => { setOriginFilter(e.target.value); setPage(1); }}
+                    >
+                        <option value="">All Origins</option>
+                        <option value="GPIB">GPIB (Church)</option>
+                        <option value="UMUM">UMUM (General)</option>
                     </select>
 
                     <select
