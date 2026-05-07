@@ -50,25 +50,49 @@ function Button({ className = "", variant = "primary", size = "md", ...props }: 
  * Status Badge Component
  * Shows visual indicator for coupon status
  */
-const StatusBadge: React.FC<{ status: "valid" | "pending" | "void" | "available" }> = ({ status }) => {
-  const statusConfig = {
-    valid: {
-      label: "Valid - Terdaftar",
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const statusConfig: Record<string, any> = {
+    "verified": {
+      label: "On Process",
+      icon: AlertCircle,
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-700",
+      borderColor: "border-blue-200",
+      iconColor: "text-blue-600",
+    },
+    "merge": {
+      label: "On Process",
+      icon: AlertCircle,
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-700",
+      borderColor: "border-blue-200",
+      iconColor: "text-blue-600",
+    },
+    "sent": {
+      label: "Kupon sudah dikirim",
       icon: CheckCircle,
       bgColor: "bg-green-50",
       textColor: "text-green-700",
       borderColor: "border-green-200",
       iconColor: "text-green-600",
     },
-    pending: {
-      label: "Sedang Diproses (Pending)",
+    "pending_payment": {
+      label: "Menunggu Pembayaran",
       icon: AlertCircle,
       bgColor: "bg-orange-50",
       textColor: "text-orange-700",
       borderColor: "border-orange-200",
       iconColor: "text-orange-600",
     },
-    void: {
+    "pending_verification": {
+      label: "Sedang Diverifikasi",
+      icon: AlertCircle,
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-700",
+      borderColor: "border-blue-200",
+      iconColor: "text-blue-600",
+    },
+    "void": {
       label: "Tidak Berlaku",
       icon: XCircle,
       bgColor: "bg-red-50",
@@ -76,17 +100,24 @@ const StatusBadge: React.FC<{ status: "valid" | "pending" | "void" | "available"
       borderColor: "border-red-200",
       iconColor: "text-red-600",
     },
-    available: {
+    "available": {
       label: "Tersedia - Belum Ada Pemilik",
       icon: CheckCircle,
-      bgColor: "bg-blue-50",
-      textColor: "text-blue-700",
-      borderColor: "border-blue-200",
-      iconColor: "text-blue-600",
+      bgColor: "bg-slate-50",
+      textColor: "text-slate-700",
+      borderColor: "border-slate-200",
+      iconColor: "text-slate-600",
     },
   };
 
-  const config = statusConfig[status];
+  const config = statusConfig[status.toLowerCase()] || {
+    label: `Status: ${status}`,
+    icon: AlertCircle,
+    bgColor: "bg-gray-50",
+    textColor: "text-gray-700",
+    borderColor: "border-gray-200",
+    iconColor: "text-gray-600",
+  };
   const Icon = config.icon;
 
   return (
@@ -172,9 +203,10 @@ const VerificationResult: React.FC<{ result: VerificationResponse }> = ({ result
             <p className="font-medium mb-1">Informasi Penting:</p>
             <ul className="list-disc list-inside space-y-1 text-blue-800">
               <li>Data pemilik disembunyikan sebagian untuk privasi</li>
-              <li>Status "Available" (Tersedia) berarti kupon belum dibeli/dimiliki</li>
-              <li>Status "Pending" berarti kupon sedang dalam proses pembelian/verifikasi</li>
-              <li>Status "Valid" berarti kupon sudah sah milik pembeli dan terdaftar untuk undian</li>
+              <li>Status "Tersedia" berarti kupon belum dibeli/dimiliki</li>
+              <li>Status "Menunggu Pembayaran" / "Sedang Diverifikasi" berarti kupon sedang dalam proses pembelian</li>
+              <li>Status "On Process" berarti pesanan sedang dipersiapkan</li>
+              <li>Status "Kupon sudah dikirim" berarti kupon sudah sah milik pembeli dan terdaftar untuk undian</li>
             </ul>
           </div>
         </div>

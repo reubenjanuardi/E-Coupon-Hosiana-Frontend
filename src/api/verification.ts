@@ -6,7 +6,7 @@ import { api } from "./client";
 export interface VerificationResponse {
   type: "BOOK" | "COUPON";
   code: string;
-  status: "valid" | "pending" | "void" | "available";
+  status: "pending_payment" | "pending_verification" | "verified" | "merge" | "sent" | "available" | "void" | string;
   bookCode: string;
   owner: {
     name: string;
